@@ -1,0 +1,40 @@
+name: Daily ArXiv Condensed Matter Agent
+
+on:
+  # 定时触发：每天国际标准时间 0:00 运行（对应北京时间早上 8:00）
+  schedule:
+    - cron: '0 1 * * *'
+  
+  # 手动触发：方便你测试用
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 拉取代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 安装 Python 环境
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    # 3. 安装依赖库
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # 4. 运行你的爬虫脚本
+    - name: Run ArXiv Agent
+      env:
+        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+        SENDER_AUTH_CODE: ${{ secrets.SENDER_AUTH_CODE }}
+        RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      run: |
+        python main.py
