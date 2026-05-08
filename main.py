@@ -19,7 +19,7 @@ def fetch_arxiv_cm():
     
     print("正在连接 arXiv 获取数据，请稍候（国内网络可能需要几秒钟）...")
     try:
-        response = requests.get(url, timeout=(120, 120))  # 连接超时10秒，读取超时120秒
+        response = requests.get(url, timeout=(120, 120))  # 连接超时120秒，读取超时120秒
         response.raise_for_status()  # 检查HTTP错误
         feed = feedparser.parse(response.text)
     except Exception as e:
@@ -68,7 +68,7 @@ def fetch_top_journals():
         url = f"https://api.crossref.org/journals/{journal_name}/works?filter=from-pub-date:{yesterday},until-pub-date:{yesterday}&rows=20"
         
         try:
-            response = requests.get(url, timeout=(120, 120))  # 连接超时10秒，读取超时30秒
+            response = requests.get(url, timeout=(120, 120))  # 连接超时120秒，读取超时120秒
             response.raise_for_status()  # 检查HTTP错误
             if response.status_code != 200:
                 continue
@@ -126,6 +126,7 @@ def filter_and_classify(papers):
         "二维材料与莫尔", 
         "磁学与自旋电子"
         "扫描隧道显微镜"
+        "扫描隧道显微学"
     ]
     
     # 构造给大模型的提示词（Prompt非常关键，决定了分类准确度）
@@ -135,6 +136,7 @@ def filter_and_classify(papers):
 3. 二维材料与莫尔
 4. 磁学与自旋电子
 5. 扫描隧道显微镜
+6. 扫描隧道显微学
 
 【判断标准】：
 - 只看论文的核心物理内容，不要因为摘要里顺带提了一句其他概念就误判。
