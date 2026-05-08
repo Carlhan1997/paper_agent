@@ -1,0 +1,20 @@
+name: Cron Smoke Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7-57/10 * * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print trigger info
+        run: |
+          echo "Triggered by: ${{ github.event_name }}"
+          echo "Schedule expression: ${{ github.event.schedule }}"
+          echo "Current UTC time:"
+          date -u
+          echo "Current runner local time:"
+          date
