@@ -8,7 +8,6 @@ import os
 import datetime
 from openai import OpenAI
 
-
 # ==========================================
 # 1. 抓取 arXiv 凝聚态最新文章
 # ==========================================
@@ -18,7 +17,7 @@ def fetch_arxiv_cm():
     
     print("正在连接 arXiv 获取数据，请稍候（国内网络可能需要几秒钟）...")
     try:
-        response = requests.get(url, timeout=15)
+        response = requests.get(url, timeout=60)
         feed = feedparser.parse(response.text)
     except Exception as e:
         print(f"网络连接失败，请检查网络或代理设置。错误: {e}")
