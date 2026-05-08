@@ -7,21 +7,24 @@ import json
 import os
 import datetime
 from openai import OpenAI
+from retrying import retry  # 添加retry库
 
 # ==========================================
 # 1. 抓取 arXiv 凝聚态最新文章
 # ==========================================
+@retry(stop_max_attempt_number=5, wait_fixed=3000)  # 最多重试5次，每次等待3秒
 def fetch_arxiv_cm():
     # 获取最新的150篇凝聚态文章（基本能覆盖当天的更新量）
     url = "http://export.arxiv.org/api/query?search_query=cat:cond-mat.*&start=0&max_results=150&sortBy=submittedDate&sortOrder=descending"
     
     print("正在连接 arXiv 获取数据，请稍候（国内网络可能需要几秒钟）...")
     try:
-        response = requests.get(url, timeout=60)
+        response = requests.get(url, timeout=(120, 120))  # 连接超时10秒，读取超时120秒
+        response.raise_for_status()  # 检查HTTP错误
         feed = feedparser.parse(response.text)
     except Exception as e:
         print(f"网络连接失败，请检查网络或代理设置。错误: {e}")
-        return []
+        raise  # 触发重试
 
     papers = []
     for entry in feed.entries:
@@ -42,6 +45,7 @@ def fetch_arxiv_cm():
 # ==========================================
 # 1.5 抓取顶尖期刊的最新文章 (通过CrossRef)
 # ==========================================
+@retry(stop_max_attempt_number=5, wait_fixed=3000)  # 最多重试5次，每次等待3秒
 def fetch_top_journals():
     # 顶级期刊的名称（必须与CrossRef数据库中的名称完全一致）及对应的简称
     JOURNALS = {
@@ -64,7 +68,8 @@ def fetch_top_journals():
         url = f"https://api.crossref.org/journals/{journal_name}/works?filter=from-pub-date:{yesterday},until-pub-date:{yesterday}&rows=20"
         
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, timeout=(120, 120))  # 连接超时10秒，读取超时30秒
+            response.raise_for_status()  # 检查HTTP错误
             if response.status_code != 200:
                 continue
                 
@@ -91,6 +96,7 @@ def fetch_top_journals():
             
         except Exception as e:
             print(f"  -> 获取 {journal_name} 失败: {e}")
+            raise  # 触发重试
             
     print(f"顶尖期刊共抓取到 {len(all_journal_papers)} 篇文章。")
     return all_journal_papers
@@ -135,7 +141,7 @@ def filter_and_classify(papers):
 - 如果这篇论文不属于上述4个物理方向（比如是做生物物理、软物质、复杂系统的），请归类为：其他。
 
 【严格规则】：
-只返回类别名称本身，不要返回任何标点符号、解释文字或前缀。例如：直接返回“超导物理”。
+只返回类别名称本身，不要返回任何标点符号、解释文字或前缀。例如：直接返回"超导物理"。
 
 论文标题：{title}
 论文摘要：{summary}"""
@@ -274,4 +280,3 @@ if __name__ == "__main__":
     
     # 运行完毕后暂停
     # input("程序执行完毕，按回车键退出...")
-
